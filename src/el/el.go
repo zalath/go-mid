@@ -21,6 +21,7 @@ func Handle() {
 		send(data[i])
 		db.Del(strconv.Itoa(data[i].ID))
 	}
+	defer db.DB.Close()
 	return
 }
 
@@ -72,6 +73,7 @@ func New(c *gin.Context) (result string) {
 		result = "mis"
 	}
 	db.DB.MustBegin().Commit()
+	defer db.DB.Close()
 	return
 }
 
@@ -85,6 +87,7 @@ func Del(id string) (result string) {
 		result = "mis"
 	} 
 	db.DB.MustBegin().Commit()
+	defer db.DB.Close()
 	result = "done"
 	return
 }
@@ -103,12 +106,14 @@ func formEl(c *gin.Context, db *dbt.Con) dbt.El {
 func GetEl(id string) dbt.El {
 	db := newdb()
 	res := db.Get(id)
+	defer db.DB.Close()
 	return res
 }
 //Save submit saving element
 func Save(id, val, col string) string {
 	db := newdb()
 	res := db.Update(id, val, col)
+	defer db.DB.Close()
 	if res {
 		return "done"
 	}
