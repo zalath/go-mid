@@ -15,19 +15,16 @@ import (
 
 
 func Handle() {
-	fmt.Println("running")
 	db := newdb()
 	data := db.List()
 	for i := 0; i < len(data); i++ {
-		// 抛出携程， 发送内容， 更新数据库
 		send(data[i])
 		db.Del(strconv.Itoa(data[i].ID))
 	}
+	return
 }
 
 func send(el dbt.El) bool {
-	fmt.Println("")
-	fmt.Println(el)
 	req, err := http.NewRequest(http.MethodPost, el.Url, bytes.NewReader([]byte(el.Txt)))
 	if err != nil {
 		fmt.Println("post err", err)
@@ -41,12 +38,13 @@ func send(el dbt.El) bool {
 		return false
 	}
 	defer resp.Body.Close()
-	respBody, err2 := ioutil.ReadAll(resp.Body)
+	// respBody, err2 := ioutil.ReadAll(resp.Body)
+	_, err2 := ioutil.ReadAll(resp.Body)
 	if err2 != nil {
 		fmt.Println("read err", err2)
 		return false
 	}
-	fmt.Println("res:",string(respBody))
+	// fmt.Println("res:",string(respBody))
 	return true
 }
 
@@ -97,7 +95,7 @@ func formEl(c *gin.Context, db *dbt.Con) dbt.El {
 	el.Txt = c.PostForm("txt")
 	el.State = "1"
 	el.Time = time.Now().Format("2006-1-2 15:04:05")
-	fmt.Printf("%#v", el)
+	// fmt.Printf("%#v", el)
 	return el
 }
 

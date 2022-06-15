@@ -28,21 +28,30 @@ func main() {
 	r.Run(":10489")
 }
 func bit() {
-	tic := time.NewTicker(time.Second * 10)
-	go func () {
-		for range tic.C {
-			time.AfterFunc(10 * time.Second, func () {el.Bit()})
+		ct := 0
+		for {
+			ct ++
+			el.Bit()
+			fmt.Println("bit send")
+			if ct > 10 {
+				bit()
+			}
+			// time.Sleep(time.Microsecond * 1)
+			time.Sleep(time.Second * 10)
 		}
-	}()
 }
 
 func dohandle() {
-	tic := time.NewTicker(time.Second * 5)
-	go func() {
-		for range tic.C {
-			time.AfterFunc(5 * time.Second, func () {el.Handle()})
+		ct := 0
+		for {
+			ct ++
+			el.Handle()
+			if ct > 10 {
+				dohandle()
+			}
+			time.Sleep(time.Second * 5)
+			// time.Sleep(time.Microsecond * 1)
 		}
-	}()
 }
 
 func handle(c *gin.Context) {

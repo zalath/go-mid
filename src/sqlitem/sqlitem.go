@@ -2,7 +2,7 @@ package sqlitem
 
 import (
 	// "database/sql"
-	"fmt"
+	// "fmt"
 	"log"
 	"strings"
 	"strconv"
@@ -19,6 +19,7 @@ type Con struct {
 //Opendb ...
 func (c *Con) Opendb() {
 	db, err := sqlx.Connect("sqlite3", "./db.db")
+	defer db.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,6 +87,7 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
 	stmt, err := db.Prepare("insert into e (url,txt,state,time) values(?,?,?,?)")
+	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 		isdone = false
@@ -126,6 +128,7 @@ func (c *Con) Update(id, val, col string) (isdone bool) {
 	sb.WriteString("=? where id=?")
 
 	stmt, err := db.Prepare(sb.String())
+	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 	}
@@ -156,6 +159,6 @@ func (c *Con) haveErr(err error) {
 			return
 		}
 	} else {
-		fmt.Println(err)
+		// fmt.Println(err)
 	}
 }
