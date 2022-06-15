@@ -18,7 +18,7 @@ func Handle() {
 	db := newdb()
 	data := db.List()
 	for i := 0; i < len(data); i++ {
-		send(data[i])
+		go send(data[i])
 		db.Del(strconv.Itoa(data[i].ID))
 	}
 	defer db.DB.Close()
@@ -26,6 +26,7 @@ func Handle() {
 }
 
 func send(el dbt.El) bool {
+	fmt.Println(el.Txt)
 	req, err := http.NewRequest(http.MethodPost, el.Url, bytes.NewReader([]byte(el.Txt)))
 	if err != nil {
 		fmt.Println("post err", err)
@@ -55,10 +56,11 @@ func Bit() {
 	var b = dbt.El{}
 	b.Url = cfg.Section("server").Key("url").String()
 	b.Txt = "{\"bit\":\"1\"}"
-	is := send(b)
-	if !is {
-		fmt.Println("bit send err")
-	}
+	go send(b)
+	// is := send(b)
+	// if !is {
+		// fmt.Println("bit send err")
+	// }
 }
 
 //New create a new element into database
