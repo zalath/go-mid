@@ -32,12 +32,8 @@ func bit() {
 		for {
 			ct ++
 			el.Bit()
-			// fmt.Println("bit send")
-			if ct > 10 {
-				bit()
-			}
-			// time.Sleep(time.Microsecond * 1)
 			time.Sleep(time.Second * 10)
+			// time.Sleep(time.Microsecond * 1)
 		}
 }
 
@@ -46,9 +42,6 @@ func dohandle() {
 		for {
 			ct ++
 			el.Handle()
-			if ct > 10 {
-				dohandle()
-			}
 			time.Sleep(time.Second * 5)
 			// time.Sleep(time.Microsecond * 1)
 		}
