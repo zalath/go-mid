@@ -15,6 +15,7 @@ require (
 	github.com/axgle/mahonia v0.0.0-20180208002826-3358181d7394 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/gin-contrib/pprof v1.3.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect

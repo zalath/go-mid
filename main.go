@@ -6,9 +6,16 @@ import (
 	"tasktask/src/el"
 	"tasktask/src/middleware"
 	"time"
+	"runtime"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/pprof"
+	dbt "tasktask/src/sqlitem"
 )
+
+// cd /www/wwwroot/qrv-mid.appbsl.cn/extend/gomid/
+// cd /www/wwwroot/qrv-mid.appbsl.cn/extend/gomm/
+// go tool pprof http://localhost:10489/debug/pprof/heap
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
@@ -21,43 +28,40 @@ func main() {
 	})
 	r.POST("/add", add)
 	r.GET("/h", handle)
-	r.GET("/count", count)
 	go dohandle()
 	go bit()
 	fmt.Println("running at 10489");
+	pprof.Register(r)
 	r.Run(":10489")
 }
 func bit() {
-		ct := 0
-		for {
-			ct ++
-			el.Bit()
-			time.Sleep(time.Second * 10)
-			// time.Sleep(time.Microsecond * 1)
-		}
+	for {
+		el.Bit()
+		time.Sleep(time.Second * 10)
+		// time.Sleep(time.Microsecond * 1)
+		runtime.GC()
+	}
 }
 
 func dohandle() {
-		ct := 0
-		for {
-			ct ++
-			el.Handle()
-			time.Sleep(time.Second * 5)
-			// time.Sleep(time.Microsecond * 1)
-		}
+	c := new(dbt.Con)
+	c.Opendb()
+	for {
+		el.Handle(c)
+		time.Sleep(time.Second * 5)
+		// time.Sleep(time.Microsecond * 1)
+		runtime.GC()
+	}
 }
 
 func handle(c *gin.Context) {
-	el.Handle()
+	con := new(dbt.Con)
+	con.Opendb()
+	el.Handle(con)
 	c.JSON(http.StatusOK, "fin")
 }
 
 func add(c *gin.Context) {
 	res := el.New(c)
-	c.JSON(http.StatusOK, res)
-}
-
-func count(c *gin.Context) {
-	res := el.Count()
 	c.JSON(http.StatusOK, res)
 }

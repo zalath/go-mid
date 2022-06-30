@@ -25,13 +25,6 @@ func (c *Con) Opendb() {
 	c.DB = db
 }
 
-//NewCon ...
-func NewCon() *Con {
-	var c = new(Con)
-	c.Opendb()
-	return c
-}
-
 //El ...
 type El struct {
 	ID      int    `db:"id" json:"id"`
@@ -40,25 +33,13 @@ type El struct {
 	State		string `db:"state" json:"state"`//1新，2处理中
 	Time		string `db:"time" json:"time"`
 }
-type Elc struct {
-	Count int `db:"count" json:"count"`
-}
-func (c *Con) Count() []Elc {
-	db := c.DB
-	var data = []Elc{}
-	err := db.Select(&data, "select count(*) as count from e where state=1;")
-	if err != nil {
-		c.haveErr(err)
-		return data
-	}
-	return data
-}
 //List a test
 func (c *Con) List() []El {
-	db := c.DB
+	// c.Opendb()
 	var err error
 	var data = []El{}
-	err = db.Select(&data, "select * from e where state=1;")
+	err = c.DB.Select(&data, "select * from e where state=1;")
+	// c.DB.Close()
 	if err != nil {
 		c.haveErr(err)
 		return nil
@@ -70,44 +51,37 @@ func (c *Con) List() []El {
 	return data
 }
 
-//Get select online from database on id
-func (c *Con) Get(id string) El {
-	db := c.DB
-	el := El{}
-	err := db.Get(&el, "select * from e where id = ?", id)
-	if err != nil {
-		c.haveErr(err)
-	}
-	return el
-}
-
 //New create a new element
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
-	db := c.DB
-	stmt, err := db.Prepare("insert into e (url,txt,state,time) values(?,?,?,?)")
-	defer stmt.Close()
+	c.Opendb()
+	stmt, err := c.DB.Prepare("insert into e (url,txt,state,time) values(?,?,?,?)")
 	if err != nil {
+		stmt.Close()
 		fmt.Println(err)
 		c.haveErr(err)
 		isdone = false
 		return
 	}
 	res, er1 := stmt.Exec(el.Url, el.Txt, el.State, el.Time)
+	stmt.Close()
 	if er1 != nil {
 		c.haveErr(er1)
+		c.DB.Close()
 		isdone = false
 		return
 	}
 	newid, _ = res.LastInsertId()
+	c.DB.Close()
 	return
 }
 
 //Del delete an element
 func (c *Con) Del(id string) (isdone bool) {
 	isdone = true
-	db := c.DB
-	_, er1 := db.Exec("delete from e where id=$1", id)
+	// c.Opendb()
+	_, er1 := c.DB.Exec("delete from e where id=$1", id)
+	// c.DB.Close()
 	if er1 != nil {
 		c.haveErr(er1)
 		isdone = false
@@ -118,21 +92,22 @@ func (c *Con) Del(id string) (isdone bool) {
 
 //Update ...
 func (c *Con) Update(id, val, col string) (isdone bool) {
-	// fmt.Println("update el :", id, col, val)
 	isdone = true
-	db := c.DB
-
+	// c.Opendb()
 	var sb strings.Builder
 	sb.WriteString("update e set ")
 	sb.WriteString(col)
 	sb.WriteString("=? where id=?")
 
-	stmt, err := db.Prepare(sb.String())
-	defer stmt.Close()
+	stmt, err := c.DB.Prepare(sb.String())
 	if err != nil {
+		stmt.Close()
+		c.DB.Close()
 		c.haveErr(err)
 	}
 	_, er1 := stmt.Exec(val, id)
+	stmt.Close()
+	// c.DB.Close()
 	if er1 != nil {
 		c.haveErr(er1)
 		isdone = false
@@ -142,7 +117,7 @@ func (c *Con) Update(id, val, col string) (isdone bool) {
 }
 func (c *Con) haveErr(err error) {
 	if err.Error() == "no such table: e" {
-		db := c.DB
+		c.Opendb()
 		sql := `CREATE TABLE "e" (
 			"id"  INTEGER NOT NULL,
 			"url"  TEXT NOT NULL,
@@ -153,12 +128,11 @@ func (c *Con) haveErr(err error) {
 			);
 			
 			`
-		_, err := db.Exec(sql)
+		_, err := c.DB.Exec(sql)
+		c.DB.Close()
 		if err != nil {
 			log.Fatal("database error")
 			return
 		}
-	} else {
-		// fmt.Println(err)
 	}
 }
