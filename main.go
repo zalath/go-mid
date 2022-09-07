@@ -19,7 +19,9 @@ import (
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	// r := gin.Default()
+	r := gin.New()
+	r.Use(gin.LoggerWithWriter(gin.DefaultWriter,"/h"),gin.Recovery())
 	r.Use(middleware.Cors())
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -30,7 +32,7 @@ func main() {
 	r.GET("/h", handle)
 	go dohandle()
 	go bit()
-	fmt.Println("running at 10489");
+	fmt.Println("running at 10489")
 	pprof.Register(r)
 	r.Run(":10489")
 }

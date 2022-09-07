@@ -1,14 +1,14 @@
 package sqlitem
 
 import (
-	// "database/sql"
 	"fmt"
 	"log"
 	"strings"
 	"strconv"
+	"time"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3" //sqlite3
+	_ "github.com/go-sql-driver/mysql"
 )
 
 /*Con ...*/
@@ -18,7 +18,8 @@ type Con struct {
 
 //Opendb ...
 func (c *Con) Opendb() {
-	db, err := sqlx.Connect("sqlite3", "./db.db")
+	//dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8","root","root","localhost",3306,"go_mid")
+	db, err := sqlx.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,14 +33,13 @@ type El struct {
 	Txt     string    `db:"txt" json:"txt"`
 	State		string `db:"state" json:"state"`//1新，2处理中
 	Time		string `db:"time" json:"time"`
+	Req			string `db:"req" json:"req"`//发起访问的时间
 }
 //List a test
 func (c *Con) List() []El {
-	// c.Opendb()
 	var err error
 	var data = []El{}
-	err = c.DB.Select(&data, "select * from e where state=1;")
-	// c.DB.Close()
+	err = c.DB.Select(&data, fmt.Sprintf("select * from e where state=1 and (req=0 or req <%d) limit 0,400;",time.Now().Unix()))
 	if err != nil {
 		c.haveErr(err)
 		return nil
@@ -55,7 +55,7 @@ func (c *Con) List() []El {
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	c.Opendb()
-	stmt, err := c.DB.Prepare("insert into e (url,txt,state,time) values(?,?,?,?)")
+	stmt, err := c.DB.Prepare("insert into e (url,txt,state,time,req) values(?,?,?,?,?)")
 	if err != nil {
 		stmt.Close()
 		fmt.Println(err)
@@ -63,7 +63,7 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 		isdone = false
 		return
 	}
-	res, er1 := stmt.Exec(el.Url, el.Txt, el.State, el.Time)
+	res, er1 := stmt.Exec(el.Url, el.Txt, el.State, el.Time,el.Req)
 	stmt.Close()
 	if er1 != nil {
 		c.haveErr(er1)
@@ -79,9 +79,7 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 //Del delete an element
 func (c *Con) Del(id string) (isdone bool) {
 	isdone = true
-	// c.Opendb()
-	_, er1 := c.DB.Exec("delete from e where id=$1", id)
-	// c.DB.Close()
+	_, er1 := c.DB.Exec("delete from e where state=2")
 	if er1 != nil {
 		c.haveErr(er1)
 		isdone = false
@@ -119,14 +117,12 @@ func (c *Con) haveErr(err error) {
 	if err.Error() == "no such table: e" {
 		c.Opendb()
 		sql := `CREATE TABLE "e" (
-			"id"  INTEGER NOT NULL,
-			"url"  TEXT NOT NULL,
-			"txt"  TEXT NOT NULL,
-			"state"  INTEGER NOT NULL default 1,
-			"time"  TEXT,
-			PRIMARY KEY ("id" ASC)
+			"id"  int primary key autoincrement,
+			"url"  varchar(500) NOT NULL,
+			"txt"  text NOT NULL,
+			"state"  int(1) NOT NULL default 1,
+			"time"  int(11) NOT NULL default 0,
 			);
-			
 			`
 		_, err := c.DB.Exec(sql)
 		c.DB.Close()
