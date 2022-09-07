@@ -3,6 +3,7 @@
 ### /add
 - url : callback address
 - txt : callback value, json format
+- req : timestamp to visit this url
 
 every 5 second, it will fetch all req, and post them out
 
